@@ -7,7 +7,7 @@
 const char* ssid = "WiFi";
 const char* password = "Password";
 
-const char* broker = "IP_Address";
+const char* broker = "10.128.102.184";
 const int port = 1883;
 
 const int sensor_pin = 34;  
@@ -45,9 +45,10 @@ void loop() {
   client.loop();
 
   int bpm = getBPM();
+  float temp = getTemp();
 
 if (millis() - lastSend > 1000) {
-  publishP(bpm);
+  publishP(bpm, temp);
   lastSend = millis();
 }
   
@@ -70,19 +71,20 @@ void WiFiConnect() {
 }
 
 int getBPM() {
-  
+  // 1. Read raw sensor
   sensorValue = analogRead(sensor_pin);
 
+  // 2. Build baseline (DC removal filter)
   baseline = (baseline * 0.95) + (sensorValue * 0.05);
 
-  
+  // 3. Extract pulse signal (AC component)
   pulseSignal = sensorValue - baseline;
 
-
+  // 4. Debug output
   Serial.print("Signal: ");
   Serial.print(pulseSignal);
 
-
+  // 5. Beat detection
   if (pulseSignal > threshold && beatDetected == false) {
 
     beatDetected = true;
@@ -99,7 +101,7 @@ int getBPM() {
     Serial.print("  >>> BEAT!");
   }
 
-
+  // 6. Reset beat flag
   if (pulseSignal < threshold) {
     beatDetected = false;
   }
@@ -125,12 +127,18 @@ void connectMQTT() {
 }
 }
 
-void publishP(int bpm) {
+void publishP(int bpm, float temp) {
   StaticJsonDocument<200> doc;
-  doc["person"] = "Harsh";
-  doc["location"] = "Jalandhar";
-  doc["bpm"] = bpm;
-  doc["led_status"] = digitalRead(32);
+
+  doc["patient"]["name"] = "Harsh";
+  doc["patient"]["id"] = 69;
+
+  doc["deviceID"] = "telekit_Jalandhar";
+
+  doc["sensors"]["bpm"] = bpm;
+  doc["sensors"]["temperature"] = temp;
+
+  doc["actuators"]["ledStatus"] = digitalRead(32);
 
   char buffer[200];
 
@@ -162,4 +170,8 @@ void callback(char* topic, byte* message, unsigned int length) {
   if(data == "OFF") {
     digitalWrite(led, LOW);
   }
+}
+
+float getTemp() {
+  return 0;
 }
