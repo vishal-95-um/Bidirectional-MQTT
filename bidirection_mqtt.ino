@@ -1,13 +1,14 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <DHT11.h>
 
 #define led 32
 
-const char* ssid = "WiFi";
-const char* password = "Password";
+const char* ssid = "username";
+const char* password = "password";
 
-const char* broker = "10.128.102.184";
+const char* broker = "localIP";
 const int port = 1883;
 
 const int sensor_pin = 34;  
@@ -23,6 +24,8 @@ unsigned long lastSend = 0;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+DHT11 dht11(4);
 
 void setup() {
   Serial.begin(115200);
@@ -111,11 +114,10 @@ int getBPM() {
 }
 
 void connectMQTT() {
-  while(!client.connected()) {
+  if(!client.connected()) {
     Serial.println("Trying to connect with MQTT..");
-  
 
-  if(client.connect("ESP_Client", "esp32/harsh/bpm", 0, true, "Setup is offline" )) {
+    if(client.connect("ESP_Client", "esp32/harsh/bpm", 0, true, "Setup is offline" )) {
     Serial.println("ESP + MQTT Connection Established");
     client.subscribe("esp32/gpio32/control");
   } else {
@@ -173,5 +175,10 @@ void callback(char* topic, byte* message, unsigned int length) {
 }
 
 float getTemp() {
-  return 0;
+  float temp = dht11.readTemperature();
+    if (temp != DHT11::ERROR_CHECKSUM && temp != DHT11::ERROR_TIMEOUT) {
+     return temp;
+    } else {
+        return -555;
+    }
 }
