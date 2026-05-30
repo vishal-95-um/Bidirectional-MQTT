@@ -1,71 +1,98 @@
-# ESP32 Bidirectional MQTT Heart Rate Monitoring System
+Overview
 
-A bidirectional IoT-based heart rate monitoring and device control system using ESP32, MQTT, and Pulse Sensor. The ESP32 continuously publishes real-time BPM sensor data while also subscribing to MQTT topics for remote LED control and command handling.
+This project implements a bidirectional IoT-based heart rate monitoring and device control system using ESP32, MQTT, and sensors. The system publishes real-time physiological data and subscribes to remote control commands. This branch implements secure communication using MQTT over TLS.
 
-## Features
+The ESP32 publishes sensor data (BPM and temperature) while also receiving control commands to manage an onboard LED.
 
-* Real-time BPM calculation using Pulse Sensor
-* Bidirectional MQTT communication
-* MQTT publish and subscribe architecture
-* JSON-based telemetry transmission
-* Remote LED/device control through MQTT commands
-* Last Will and Testament (LWT) support
-* WiFi-enabled IoT connectivity
-* Real-time sensor monitoring and actuator response
+Features
+Real-time BPM calculation using Pulse Sensor
+Temperature monitoring using DHT11 sensor
+Bidirectional MQTT communication (publish and subscribe)
+JSON-based telemetry format
+Remote LED control via MQTT commands
+MQTT over TLS secure communication
+WiFi connectivity for IoT communication
+Technologies Used
+ESP32
+Arduino IDE
+MQTT protocol
+WiFiClientSecure (TLS support)
+PubSubClient library
+ArduinoJson library
+DHT11 sensor
+Pulse Sensor
+System Architecture
+ESP32 → MQTT Broker (Publishing)
 
-## Technologies Used
+The ESP32 publishes sensor data to the MQTT broker.
 
-* ESP32
-* Arduino IDE
-* MQTT Protocol
-* Mosquitto MQTT Broker
-* ArduinoJson
-* PubSubClient
+Topic:
 
-## System Architecture
+esp32/harsh/bpm
+MQTT Broker → ESP32 (Subscribing)
 
-### ESP32 → MQTT Broker (Publishing)
+The ESP32 subscribes to control commands from the broker.
 
-The ESP32 publishes heart rate telemetry data to the MQTT broker.
+Topic:
 
-**Topic:**
+esp32/gpio32/control
+Security Implementation (MQTT over TLS)
 
-`esp32/harsh/bpm`
+This branch uses MQTT over TLS for secure communication.
 
-### MQTT Broker → ESP32 (Subscribing)
+Port: 8883
+Client: WiFiClientSecure
+Secure connection enabled using TLS
 
-The ESP32 subscribes to control commands from the MQTT broker for remote LED/device control.
+Note: setInsecure() is used for testing purposes. In production, a CA certificate should be configured using setCACert().
 
-**Topic:**
-
-`esp32/gpio32/control`
-
-## Example Telemetry Payload
-
-```json
+Example Telemetry Payload
 {
-  "person": "Harsh",
-  "location": "Jalandhar",
-  "bpm": 78,
-  "led_status": 1
+  "patient": {
+    "name": "Harsh",
+    "id": 69
+  },
+  "deviceID": "telekit_Jalandhar",
+  "sensors": {
+    "bpm": 78,
+    "temperature": 36.5
+  },
+  "actuators": {
+    "ledStatus": 1
+  }
 }
-```
+Bidirectional Workflow
+ESP32 reads pulse sensor data
+BPM is calculated in real time
+Temperature is read from DHT11 sensor
+Data is published to MQTT broker over TLS
+External clients subscribe to telemetry topic
+MQTT broker sends control commands
+ESP32 receives commands and controls LED
+MQTT Commands
 
-## Bidirectional MQTT Workflow
+Topic:
 
-1. ESP32 reads pulse sensor data.
-2. BPM value is calculated in real time.
-3. ESP32 publishes BPM data to MQTT broker.
-4. MQTT clients can monitor telemetry remotely.
-5. MQTT broker sends control commands to ESP32.
-6. ESP32 receives subscribed commands and controls onboard LED/device.
+esp32/gpio32/control
 
-## Future Improvements
+Commands:
 
-* Node-RED Dashboard Integration
-* Cloud MQTT Broker Support
-* Firebase Integration
-* Data Logging and Analytics
-* Web Dashboard for Monitoring
-* Mobile App Integration
-* Secure MQTT Authentication (TLS/SSL)
+ON → Turns LED ON
+OFF → Turns LED OFF
+Key Implementation Details
+Secure Client
+WiFiClientSecure espClient;
+MQTT Broker Port
+8883
+TLS Configuration
+espClient.setInsecure();
+Future Improvements
+Replace insecure TLS mode with certificate-based authentication
+Node-RED dashboard integration
+Cloud database logging (Firebase / InfluxDB)
+Web-based monitoring dashboard
+Mobile application support
+Role-based MQTT access control (ACL)
+Summary
+
+This branch upgrades the system from standard MQTT communication to secure MQTT over TLS, enabling encrypted data transmission between ESP32 and MQTT broker.
