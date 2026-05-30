@@ -1,15 +1,16 @@
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <DHT11.h>
 
 #define led 32
 
-const char* ssid = "username";
-const char* password = "password";
+const char* ssid = "wifi_username";
+const char* password = "wifi_password";
 
-const char* broker = "localIP";
-const int port = 1883;
+const char* broker = "broker url";
+const int port = 8883;
 
 const int sensor_pin = 34;  
 int sensorValue = 0;
@@ -22,7 +23,7 @@ float threshold = 50;
 
 unsigned long lastSend = 0;
 
-WiFiClient espClient;
+WiFiClientSecure espClient;
 PubSubClient client(espClient);
 
 DHT11 dht11(4);
@@ -32,6 +33,8 @@ void setup() {
   delay(1000);
   pinMode(led, OUTPUT);
   WiFiConnect();
+
+  espClient.setInsecure();
   
   client.setServer(broker, port);
   client.setCallback(callback);
@@ -117,7 +120,7 @@ void connectMQTT() {
   if(!client.connected()) {
     Serial.println("Trying to connect with MQTT..");
 
-    if(client.connect("ESP_Client", "esp32/harsh/bpm", 0, true, "Setup is offline" )) {
+    if(client.connect("ESP_Client", "username", "password")) {
     Serial.println("ESP + MQTT Connection Established");
     client.subscribe("esp32/gpio32/control");
   } else {
